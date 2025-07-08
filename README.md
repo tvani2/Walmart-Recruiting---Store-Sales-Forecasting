@@ -1,5 +1,7 @@
 # Walmart-Recruiting---Store-Sales-Forecasting
 
+Link to the report on Wand&B - https://wandb.ai/final-project-ml/walmart-sales-prediction/reports/Walmart-Sales-Report--VmlldzoxMzUwNjA1MA
+
 მოცემული გვქონდა Walmart-ის სხვადასხვა რეგიონში მდებარე 45 მაღაზიის გაყიდვების მონაცემები 2010-2012 წლებში. მიზანი იყო თითოეული მაღაზიის მასშტაბით გაყიდვების პროგნოზირება. 
 გადმოგვეცემოდა შემდეგი ფაილები : 
 train.csv მთავარი სატრენინგო ფაილი 5 სვეტით :  Store, Dept, Date, Weekly_Sales (target), isHoliday.
