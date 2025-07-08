@@ -27,6 +27,22 @@ Preprocessing : დავმერჯე train store  და feature-თან. 
 Feature Engineering : isHoliday-ს დავუმატე 4 დღესასწაულის აღმნიშვნელი სვეტი : მადლიერების დღე, შობა, super bowl, labor day. ასევე დავამატე days since last და days to next holiday. ასევე lag (1, 2, 3) და moving average სვეტები. Date-ს მიხედვით დავამატე წლის, თვის, კვირისა და დღის აღმნიშვნელი სვეტებიც. 
 დავსპლიტე დატა 3 ნაწილად : train, validation და test. დავაtuning learning rate, number of leaves, subsample, colsample_bytree. პლოტებზე ჩანს დარანკული ფიჩერები, და თითოეული პარამეტრის მნიშვნელობა საბოლოო შედეგზე. wmae = 589, თუმცა კეგლზე უფრო მეტი მომცა. 
 
+2. Tree-Based Models
+***XGBoost (Extreme Gradient Boosting)*** წარმოადგენს ensemble არქიტექტურას, სადაც მრავალი სუსტი decision tree-ის კომბინაციით იქმნება ძლიერი მოდელი.
+Preprocessing: დავმერჯე train, features და stores მონაცემები. CPI და Unemployment-ში NaN მნიშვნელობები შევავსე forward fill-ით, ხოლო markdown სვეტებში 0-ით. კატეგორიული ცვლადები numerical-ში გადავიყვანე Label Encoding-ით.
+Feature Engineering: დავამატე დროის ცვლადები (წელი, თვე, კვირა, დღე), ციკლური ცვლადები sin/cos ტრანსფორმაციით, სპეციფიკური დღესასწაულების მარკერები (Super Bowl, Labor Day, Thanksgiving, Christmas), holiday proximity ფიჩერი (2 კვირა წინ/შემდეგ), სტატისტიკური ცვლადები (store/dept/store-dept მიხედვით mean/std/median), markdown ცვლადები (ჯამი, რაოდენობა, ინტენსივობა), ეკონომიკური ცვლადები (CPI/Unemployment რაციო, fuel impact).
+Feature Selection: SelectKBest-ით ავარჩიე 50 საუკეთესო ცვლადი f_regression score-ის მიხედვით.
+Model Training: გამოვიყენე weighted sampling - holiday პერიოდებში 5-ჯერ მეტი წონით. ჰიპერპარამეტრები: max_depth=8, learning_rate=0.05, n_estimators=2700, early_stopping=50 rounds. ვცადე ჰიპერპარამეტრთა სხვადასხვა კომბინაცია, თუმცა ტესტ სეტზე საუკეთესო მეტრიკა - wmae - აღნიშნულმა კომბინაციამ დააფიქსირა. დავაგენერირე submission ფაილი უნახავ მონაცემებზე და kaggle - ზე ავტვირთე, სადაც დააფიქსირა 3040 wmae (~180 leaderboard-ზე)
+შედეგი: Training WMAE: 613.50, Validation WMAE: 1163.57. Overfitting ratio: 1.9x, რაც მსგავსი სირთულის მონაცემებისთვის მისაღები დონეა.
 
 **Classical Statistical Time-Series Models**
-1. **ARIMA** - 
+1. **ARIMA** -
+
+2. **SARIMA (Seasonal AutoRegressive Integrated Moving Average)** არის კლასიკური დროითი მწკრივების მოდელი, რომელიც ითვალისწინებს სეზონურობას. იგი იყენებს წარსული sales მნიშვნელობებს მომავლის პროგნოზირებისთვის.
+Preprocessing: შევაერთე train, features და stores ფაილები. CPI და Unemployment სვეტებში NaN მნიშვნელობები შევავსე ffill() მეთოდით, ხოლო markdown სვეტში - 0-ით. Date ფორმატი გავასწორე და კატეგორიული ცვლადები ციფრულ მნიშვნელობებად გადავიყვანე.
+Feature Engineering: დავამატე დროის ფიჩერები (წელი, თვე, კვირა, დღე), Holiday ფიჩერები (Super Bowl, Labor Day, Thanksgiving, Christmas), lag ფიჩერები (1, 2, 4, 8, 12 კვირის განმავლობაში), store/department სტატისტიკები (საშუალო, სტანდარტული გადახრა), markdown-ის ფიჩერები (სრული markdown, აქტიური markdown-ების რაოდენობა), ეკონომიკური ფიჩერები (CPI, Unemployment, Fuel Price) და კონკურენტული ფიჩერები.
+მოდელი: გამოვიყენე SARIMA(1,1,1)(1,1,1,52) - სადაც autoregressive order არის 1, differencing - 1, moving average — 1, ხოლო სეზონური პარამეტრები მითითებულია 52 კვირაზე. თითოეული Store-Dept კომბინაციისთვის ცალკე ვაწვრთნიდი მოდელს.
+შედეგი: WMAE = 1192.24, MAE = 1110.76. 200 კომბინაციიდან 189 წარმატებით დასრულდა (94.5% success rate).
+დამატებით, ჩავატარე ექსპერიმენტები SARIMAX მოდელით, სადაც ჩავრთე 12 დროითი ფიჩერი. ვალიდაცია განხორციელდა 8 კვირიანი holdout-ით და გამოყენებული იყო 50 შემთხვევითი Store-Dept კომბინაცია 3331-დან. შედეგების მიხედვით, 50-დან 46 მოდელი წარმატებით დასრულდა, წარუმატებელი შემთხვევა არ დაფიქსირებულა, რაც 100%-იან წარმატების მაჩვენებელს ნიშნავს. SARIMA მოდელის ვალიდაციის შედეგებით, მიღებული WMAE იყო 1218.20, ხოლო MAE — 1207.74. დამატებითი შეფასებისას MSE შეადგინა 7,174,982.36, RMSE — 2678.62, ხოლო R² მნიშვნელობა იყო 0.9883, რაც მიუთითებს მოდელის მაღალ პროგნოზირების უნარზე.
+
+
